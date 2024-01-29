@@ -63,7 +63,7 @@ let instancedMesh;
 async function fetchDataFromAPI(columnName) {
   try {
     // const response = await fetch(`http://127.0.0.1:8000/getdata?col=${columnName}`);
-    const response = await fetch(`http://44.224.62.102/getdata?col=${columnName}`);
+    const response = await fetch(`https://fishiesapi.techkyra.com/getdata?col=${columnName}`);
     const data = await response.json();
     return data;
   } catch (error) {
