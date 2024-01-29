@@ -136,7 +136,7 @@ controls.mouseButtons = {
 };
 
 controls.rotateSpeed = 0; // Disable rotation
-controls.zoomSpeed = 1.2;
+controls.zoomSpeed = 3;
 controls.panSpeed = 0.8;
 controls.noZoom = false;
 controls.noPan = false; // Enable panning with left mouse button now
