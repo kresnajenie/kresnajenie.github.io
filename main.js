@@ -1,7 +1,8 @@
-import * as THREE from 'three';
+// import * as THREE from 'three';
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 
 import Stats from 'three/addons/libs/stats.module.js';
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 
 const jsonFilePath = '4_week_full_labeled_celltype2.json';
 // const jsonFilePath = 'cbm2_labeled.json';
