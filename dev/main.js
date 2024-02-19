@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { randInt } from 'three/src/math/MathUtils';
+import Stats from 'three/addons/libs/stats.module.js';
 
 // Scene
 const scene = new THREE.Scene();
@@ -39,6 +39,9 @@ const columns = [
   'global_sphere2', 
   'clusters', 
   'clusters_colors'];
+
+let stats = new Stats();
+document.body.appendChild(stats.dom);
 
 // Fetch all data and combine
 Promise.all(columns.map(fetchDataFromAPI)).then(results => {
@@ -185,42 +188,79 @@ function normalizeArray(arr, nmax) {
   return arr.map(value => Math.min(value / nmax, 1));
 }
 
+const width = window.innerWidth;
+const height = window.innerHeight;
 
+// Adjust aspect ratios for each camera
+const cameraOneAspectRatio = (width * 0.75) / height;
+const cameraTwoAspectRatio = (width * 0.25) / height;
+
+
+const cameraOne = new THREE.PerspectiveCamera(75, cameraOneAspectRatio, 0.1, 1000);
+const cameraTwo = new THREE.PerspectiveCamera(75, cameraTwoAspectRatio, 0.1, 1000);
 // Two cameras
-const aspectRatio = window.innerWidth / window.innerHeight;
-const cameraOne = new THREE.PerspectiveCamera(75, aspectRatio / 2, 0.1, 1000);
-const cameraTwo = new THREE.PerspectiveCamera(75, aspectRatio / 2, 0.1, 1000);
+// const aspectRatio = window.innerWidth / window.innerHeight;
+// const cameraOne = new THREE.PerspectiveCamera(75, aspectRatio / 2, 0.1, 1000);
+// const cameraTwo = new THREE.PerspectiveCamera(75, aspectRatio / 2, 0.1, 1000);
 
+
+
+const offset = 1000;
 // Position the cameras
 cameraOne.position.x = 50;
-cameraTwo.position.x = 100;
-cameraTwo.position.z = 100;
-cameraOne.position.z = 100;
+cameraOne.position.y = 50;
+cameraOne.position.z = 200;
+
+cameraTwo.position.x = offset;
+cameraTwo.position.z = 180;
+
+// Define a shared target position for both cameras to look at
+const sharedTarget = new THREE.Vector3(0, 0, 0); // Adjust as needed for your scene
 
 // Initialize OrbitControls with cameraOne
 let controls = new OrbitControls(cameraOne, renderer.domElement);
+controls.target.copy(sharedTarget); // Initially set target for cameraOne
 controls.enableDamping = true;
 controls.dampingFactor = 0.25;
+controls.update();
 
-// Function to switch controls between cameras
 function switchControls() {
-    const currentCamera = controls.object === cameraOne ? cameraTwo : cameraOne;
+    const isCameraOneActive = controls.object === cameraOne;
     controls.dispose(); // Dispose current controls
-    controls = new OrbitControls(currentCamera, renderer.domElement);
+
+    if (isCameraOneActive) {
+        // Switch to cameraTwo
+        controls = new OrbitControls(cameraTwo, renderer.domElement);
+        // Set specific properties for cameraTwo controls
+        controls.enableRotate = false; // Disable rotation for cameraTwo
+        controls.enableZoom = true; // Assuming you want zoom
+        controls.target.copy(sharedTarget); // Ensure cameraTwo looks at the shared target
+        controls.enablePan = true; // Enable panning
+    } else {
+        // Switch back to cameraOne
+        controls = new OrbitControls(cameraOne, renderer.domElement);
+        // Reset or set specific properties for cameraOne controls
+        controls.enableRotate = true;
+        controls.enableZoom = true;
+        controls.target.copy(sharedTarget); // Ensure cameraOne looks at the shared target
+    }
+
     controls.enableDamping = true;
     controls.dampingFactor = 0.25;
+    controls.update(); // Important to apply the changes made to controls
 }
 
-// Example: Bind switchControls to a keyboard event (e.g., pressing 'c')
+// Bind switchControls to a keyboard event (e.g., pressing 'c')
 document.addEventListener('keydown', (event) => {
-    if (event.key === 'c') {
-        switchControls();
-    }
+    // if (event.key === 'c') {
+    //     switchControls();
+    // }
 });
 
 // Geometry and material for the instanced mesh
 
 let instancedMesh;
+let instancedMeshUmap;
 
 async function updateInstancedMesh(filterType = []) {
   // Clear existing mesh
@@ -230,12 +270,21 @@ async function updateInstancedMesh(filterType = []) {
     scene.remove(instancedMesh);
   }
 
+  if (instancedMeshUmap) {
+    instancedMeshUmap.geometry.dispose();
+    instancedMeshUmap.material.dispose();
+    scene.remove(instancedMeshUmap);
+  }
+
   // const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
   // const count = 10;
-  const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+  // const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+  const sphereGeometry = new THREE.CircleGeometry(0.1, 32, 32);
   const material = new THREE.MeshBasicMaterial();
   const count = jsonData.length;
-  instancedMesh = new THREE.InstancedMesh(sphereGeometry, material, count*2);
+  // instancedMesh = new THREE.InstancedMesh(sphereGeometry, material, count*2);
+  instancedMesh = new THREE.InstancedMesh(sphereGeometry, material, count);
+  instancedMeshUmap = new THREE.InstancedMesh(sphereGeometry, material, count);
 
   // Position each instance
   const proj = new THREE.Object3D();
@@ -266,6 +315,7 @@ async function updateInstancedMesh(filterType = []) {
   }
 
   let mod = 100;
+  let umapmod = 0.5;
 
   for (let i = 0; i < count; i++) {
     
@@ -277,17 +327,17 @@ async function updateInstancedMesh(filterType = []) {
       let scale = ctsClipped[i]*5+1;
 
       proj.scale.set(scale, scale, scale);
-      umap.scale.set(scale, scale, scale);
+      umap.scale.set(scale*umapmod, scale*umapmod, scale*umapmod);
 
     } else {
       if (filterType.includes(jsonData[i]["clusters"]) || filterType.length == 0) {
         color = new THREE.Color(jsonData[i]["clusters_colors"]);
         proj.scale.set(5, 5, 5);
-        umap.scale.set(5, 5, 5);
+        umap.scale.set(5*umapmod, 5*umapmod, 5*umapmod);
       } else {
         color = new THREE.Color('#5e5e5e');
         proj.scale.set(1, 1, 1);
-        umap.scale.set(1, 1, 1);
+        umap.scale.set(1*umapmod, 1*umapmod, 1*umapmod);
       }
     }
 
@@ -299,36 +349,95 @@ async function updateInstancedMesh(filterType = []) {
     instancedMesh.setColorAt(i, color);
 
     //plot umap
-    umap.position.set(jsonData[i]["X_umap0_norm"]*5+200, jsonData[i]["X_umap1_norm"]*5, 10);
+    umap.position.set(jsonData[i]["X_umap0_norm"]*5+offset, jsonData[i]["X_umap1_norm"]*5, 10);
     umap.updateMatrix();
-    instancedMesh.setMatrixAt(i+count, umap.matrix);
-    instancedMesh.setColorAt(i+count, color);
+    instancedMeshUmap.setMatrixAt(i, umap.matrix);
+    instancedMeshUmap.setColorAt(i, color);
   }
 
   scene.add(instancedMesh);
+  scene.add(instancedMeshUmap);
 }
 
-// Animation loop
+// // Animation loop
+// function animate() {
+  
+//     requestAnimationFrame(animate);
+//     controls.update(); // Only needed if controls.enableDamping is true
+
+//     // Rotate the instanced mesh
+//     // instancedMesh.rotation.x += 0.01;
+//     // instancedMesh.rotation.y += 0.01;
+
+//     // Set up for cameraOne (75% of the screen)
+//     renderer.setViewport(0, 0, width * 0.75, height);
+//     renderer.setScissor(0, 0, width * 0.75, height);
+//     renderer.setScissorTest(true);
+//     renderer.render(scene, cameraOne);
+
+//     // Set up for cameraTwo (25% of the screen)
+//     renderer.setViewport(width * 0.75, 0, width * 0.25, height);
+//     renderer.setScissor(width * 0.75, 0, width * 0.25, height);
+//     renderer.setScissorTest(true);
+//     renderer.render(scene, cameraTwo);
+
+//     renderer.setScissorTest(false); // Disable scissor test after rendering
+
+//     // // Render left side
+//     // renderer.setScissorTest(true);
+//     // renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
+//     // renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
+//     // renderer.render(scene, cameraOne);
+
+//     // // Render right side
+//     // renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+//     // renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+//     // renderer.render(scene, cameraTwo);
+
+//     // renderer.setScissorTest(false);
+//     stats.update();
+// }
+
 function animate() {
-    requestAnimationFrame(animate);
-    controls.update(); // Only needed if controls.enableDamping is true
+  requestAnimationFrame(animate);
+  controls.update(); // Only needed if controls.enableDamping is true
 
-    // Rotate the instanced mesh
-    // instancedMesh.rotation.x += 0.01;
-    // instancedMesh.rotation.y += 0.01;
+  // Assume your instanced mesh is global or accessible within this scope
+  const cameraQuaternion = cameraOne.quaternion;
 
-    // Render left side
-    renderer.setScissorTest(true);
-    renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
-    renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
-    renderer.render(scene, cameraOne);
+  for (let i = 0; i < jsonData.length * 2; i++) {
+      const matrix = new THREE.Matrix4();
+      const position = new THREE.Vector3();
+      const scale = new THREE.Vector3();
+      
+      // Extract position and scale from the current instance matrix
+      instancedMesh.getMatrixAt(i, matrix);
+      matrix.decompose(position, new THREE.Quaternion(), scale);
 
-    // Render right side
-    renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
-    renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
-    renderer.render(scene, cameraTwo);
+      // Rebuild the matrix using the camera's quaternion for rotation
+      matrix.compose(position, cameraQuaternion, scale);
+      instancedMesh.setMatrixAt(i, matrix);
+  }
 
-    renderer.setScissorTest(false);
+  instancedMesh.instanceMatrix.needsUpdate = true; // Important!
+
+  // Your rendering logic...
+  renderer.setViewport(0, 0, width * 0.75, height);
+  renderer.setScissor(0, 0, width * 0.75, height);
+  renderer.setScissorTest(true);
+  renderer.render(scene, cameraOne);
+
+  renderer.setViewport(width * 0.75, 0, width * 0.25, height);
+  renderer.setScissor(width * 0.75, 0, width * 0.25, height);
+  renderer.setScissorTest(true);
+  renderer.render(scene, cameraTwo);
+
+  renderer.setScissorTest(false); // Disable scissor test after rendering
+
+  stats.update();
 }
+
+animate();
+
 
 animate();

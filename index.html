@@ -3,6 +3,9 @@
 <head>
     <meta charset="utf-8">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
 
     <title>fisheyes by kj</title>
     <style>
@@ -34,6 +37,24 @@
             left: 10px;
             z-index: 100;
         }
+
+        .plus-jakarta-sans-regular {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400; /* Regular weight */
+            font-style: normal;
+        }
+        .plus-jakarta-sans-bold {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 700; /* Bold weight */
+            font-style: normal;
+        }
+        /* Apply the font globally */
+        body {
+            margin: 0;
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
     </style>
     <script type="importmap">
         {
@@ -43,14 +64,14 @@
           }
         }
       </script>
-  <script type="module" crossorigin src="/assets/index-z1WnlrsK.js"></script>
+  <script type="module" crossorigin src="/assets/index-ZHAWsvM8.js"></script>
 </head>
 <body>
-    <button id="toggleCheckboxContainer">Toggle Filters</button>
+    <button id="toggleCheckboxContainer" >Toggle Filters</button>
     
     
 
-    <div class="checkbox-container" id="checkboxContainer">
+    <div class="checkbox-container" id="checkboxContainer"  style="display: none;">
         <!-- Textbox input -->
         <input type="text" id="myTextbox" placeholder="Enter text here">
 
