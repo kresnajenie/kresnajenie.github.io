@@ -1,83 +1,51 @@
-// import * as THREE from 'three';
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { randInt } from 'three/src/math/MathUtils';
 
-import Stats from 'three/addons/libs/stats.module.js';
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
-
-const jsonFilePath = '4_week_full_labeled_celltype2.json';
-// const jsonFilePath = 'cbm2_labeled.json';
-
+// Scene
 const scene = new THREE.Scene();
 
-// Use an orthographic camera for 2D rendering
-const camera = new THREE.OrthographicCamera(window.innerWidth / -4, window.innerWidth / 4, window.innerHeight / 4, window.innerHeight / -4, 1, 1000);
-camera.position.set(0, 0, 1000);
-
-
-
+// Renderer
 const renderer = new THREE.WebGLRenderer();
-
-const container = document.getElementById('container');
-container.appendChild(renderer.domElement);
-
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Instance properties
-const circleRadius = 1; // Adjust as needed
-
+// will be all data here
 let jsonData = [];
 
-const lodLevels = [
-  new THREE.CircleGeometry(circleRadius, 32), // High detail
-  new THREE.CircleGeometry(circleRadius, 16), // Medium detail
-  new THREE.CircleGeometry(circleRadius, 8),  // Lower detail
-];
-
-let currentDetailLevel = 0;
-let instancedMesh;
-
-// fetch(jsonFilePath)
-//   .then(response => response.json())
-//   .then(data => {
-//     jsonData = data;
-//     updateInstancedMesh();
-
-//     // get unique cell types and colors
-//     let cellTypeColorMap = new Map();
-
-//     jsonData.forEach(item => {
-//         // Check if the celltype is already added to the map
-//         if (!cellTypeColorMap.has(item.celltype)) {
-//             cellTypeColorMap.set(item.celltype, item.color);
-//         }
-//     });
-
-//     let uniqueCellTypesWithColors = Array.from(cellTypeColorMap, ([celltype, color]) => [celltype, color]);
-//     createCheckboxes(uniqueCellTypesWithColors);
-
-//   })
-//   .catch(error => console.error('Error fetching JSON data:', error));
 
 // Asynchronous function to fetch data for a given column
 async function fetchDataFromAPI(columnName) {
-  try {
+    try {
     // const response = await fetch(`http://127.0.0.1:8000/getdata?col=${columnName}`);
-    const response = await fetch(`https://fishiesapi.techkyra.com/getdata?col=${columnName}`);
+    const response = await fetch(`https://fisheyes.techkyra.com/getdata?col=${columnName}`);
+    // console.log(response)
     const data = await response.json();
     return data;
-  } catch (error) {
+    } catch (error) {
     console.error('Error fetching data for', columnName, error);
-  }
+    }
 }
 
 // Columns to be fetched
-const columns = ['x_umap_norm', 'y_umap_norm', 'x_spatial_norm', 'y_spatial_norm','y_umap_norm', 'celltype', 'color'];
+const columns = [
+  'X_umap0_norm', 
+  'X_umap1_norm', 
+  'global_sphere0_norm', 
+  'global_sphere1_norm',
+  'global_sphere2_norm', 
+  'global_sphere0', 
+  'global_sphere1',
+  'global_sphere2', 
+  'clusters', 
+  'clusters_colors'];
 
 // Fetch all data and combine
 Promise.all(columns.map(fetchDataFromAPI)).then(results => {
   // Combine data from all columns into one object
   let transformedData = {};
+
+  console.log(results);
 
   columns.forEach((col, index) => {
     let myString = results[index]["data"];
@@ -88,7 +56,7 @@ Promise.all(columns.map(fetchDataFromAPI)).then(results => {
   console.log(transformedData)
 
 
-  for (let i = 0; i < transformedData.celltype.length; i++) {
+  for (let i = 0; i < transformedData.clusters.length; i++) {
       let row = {};
       for (let key in transformedData) {
           row[key] = transformedData[key][i];
@@ -106,8 +74,8 @@ Promise.all(columns.map(fetchDataFromAPI)).then(results => {
 
   jsonData.forEach(item => {
       // Check if the celltype is already added to the map
-      if (!cellTypeColorMap.has(item.celltype)) {
-          cellTypeColorMap.set(item.celltype, item.color);
+      if (!cellTypeColorMap.has(item.clusters)) {
+          cellTypeColorMap.set(item.clusters, item.clusters_colors);
       }
   });
 
@@ -117,81 +85,13 @@ Promise.all(columns.map(fetchDataFromAPI)).then(results => {
   console.error('Error combining data:', error);
 });
 
-
-
-let stats = new Stats();
-document.body.appendChild(stats.dom);
-
-
-// OrbitControls might not be necessary for 2D, but keeping it for now
-// const controls = new OrbitControls(camera, renderer.domElement);
-
-const controls = new TrackballControls(camera, renderer.domElement);
-
-// Set mouse buttons for controls
-controls.mouseButtons = {
-  LEFT: THREE.MOUSE.PAN,
-  MIDDLE: THREE.MOUSE.ZOOM,
-  RIGHT: THREE.MOUSE.ROTATE
-};
-
-controls.rotateSpeed = 0; // Disable rotation
-controls.zoomSpeed = 3;
-controls.panSpeed = 0.8;
-controls.noZoom = false;
-controls.noPan = false; // Enable panning with left mouse button now
-controls.staticMoving = true;
-controls.dynamicDampingFactor = 0.3;
-
-function animate() {
-  requestAnimationFrame(animate);
-  // updateLOD();
-  controls.update(); // Update the controls
-
-  // Update camera lookAt position based on its current position
-  camera.lookAt(camera.position);
-
-  renderer.render(scene, camera);
-  stats.update();
-}
-
-// function updateLOD() {
-//   if (!jsonData) return;
-
-//   const distance = camera.position.z;
-//   let detailLevel;
-
-//   // Adjust LOD based on camera distance (Z-axis in this case)
-//   if (distance < 5) {
-//     detailLevel = 1;
-//   } else if (distance < 10) {
-//     detailLevel = 2;
-//   } else {
-//     detailLevel = 3;
-//   }
-
-//   if (detailLevel !== currentDetailLevel) {
-//     updateInstancedMesh();
-//     currentDetailLevel = detailLevel;
-//   }
-// }
-
-// Event listener for the button
-// document.getElementById('toggleDGNeurons').addEventListener('click', function() {
-//   updateInstancedMesh("Dentate gyrus neurons");
-// });
-
-// document.getElementById('toggleAll').addEventListener('click', function() {
-//   updateInstancedMesh();
-// });
-
 // Toggle the checkbox container visibility
 document.getElementById('toggleCheckboxContainer').addEventListener('click', () => {
-  const checkboxContainer = document.getElementById('checkboxContainer');
-  checkboxContainer.style.display = checkboxContainer.style.display === 'none' ? 'block' : 'none';
-});
+    const checkboxContainer = document.getElementById('checkboxContainer');
+    checkboxContainer.style.display = checkboxContainer.style.display === 'none' ? 'block' : 'none';
+  });
 
-// Array to hold the currently checked cell types
+  // Array to hold the currently checked cell types
 let checkedCellTypes = [];
 
 // Function to update instanced mesh based on checked items
@@ -205,6 +105,7 @@ function updateCheckedItems(celltype, isChecked) {
     }
     updateInstancedMesh(checkedCellTypes);
 }
+
 
 // Function to create checkboxes
 function createCheckboxes(cellTypesWithColors) {
@@ -240,12 +141,6 @@ function createCheckboxes(cellTypesWithColors) {
           updateCheckedItems(celltype, e.target.checked);
       });
   });
-}
-
-
-const componentToHex = (c) => {
-  const hex = c.toString(16);
-  return hex.length == 1 ? "0" + hex : hex;
 }
 
 
@@ -290,8 +185,44 @@ function normalizeArray(arr, nmax) {
   return arr.map(value => Math.min(value / nmax, 1));
 }
 
-async function updateInstancedMesh(filterType = []) {
 
+// Two cameras
+const aspectRatio = window.innerWidth / window.innerHeight;
+const cameraOne = new THREE.PerspectiveCamera(75, aspectRatio / 2, 0.1, 1000);
+const cameraTwo = new THREE.PerspectiveCamera(75, aspectRatio / 2, 0.1, 1000);
+
+// Position the cameras
+cameraOne.position.x = 50;
+cameraTwo.position.x = 100;
+cameraTwo.position.z = 100;
+cameraOne.position.z = 100;
+
+// Initialize OrbitControls with cameraOne
+let controls = new OrbitControls(cameraOne, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.25;
+
+// Function to switch controls between cameras
+function switchControls() {
+    const currentCamera = controls.object === cameraOne ? cameraTwo : cameraOne;
+    controls.dispose(); // Dispose current controls
+    controls = new OrbitControls(currentCamera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+}
+
+// Example: Bind switchControls to a keyboard event (e.g., pressing 'c')
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'c') {
+        switchControls();
+    }
+});
+
+// Geometry and material for the instanced mesh
+
+let instancedMesh;
+
+async function updateInstancedMesh(filterType = []) {
   // Clear existing mesh
   if (instancedMesh) {
     instancedMesh.geometry.dispose();
@@ -299,17 +230,18 @@ async function updateInstancedMesh(filterType = []) {
     scene.remove(instancedMesh);
   }
 
-  const geometry = lodLevels[0];
+  // const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  // const count = 10;
+  const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
   const material = new THREE.MeshBasicMaterial();
-  console.log("here");
-  console.log(jsonData);
-  instancedMesh = new THREE.InstancedMesh(geometry, material, jsonData.length*2);
-  console.log(filterType)
+  const count = jsonData.length;
+  instancedMesh = new THREE.InstancedMesh(sphereGeometry, material, count*2);
 
-  // Update instances
-  const dummy1 = new THREE.Object3D();
-  const dummy2 = new THREE.Object3D();
+  // Position each instance
+  const proj = new THREE.Object3D();
+  const umap = new THREE.Object3D();
 
+  let color;
 
   // when plotting gene
   let cts;
@@ -333,66 +265,70 @@ async function updateInstancedMesh(filterType = []) {
     }
   }
 
-  jsonData.forEach((item, index) => {
-      let color;
-      // plotting gene
-      if (typeof filterType === 'string') {
-        // console.log("here")
-        // Calculate the 99th percentile as nmax
-        // console.log(nmax)
+  let mod = 100;
 
-        // Normalize cts, ensuring values are between 0 and 1
-        // const ncts = cts.map(val => Math.min(Math.max(val / nmax, 0), 1));
-        // console.log(norm)
-        let colorrgb = coolwarm(ctsClipped[index]);
-        console.log(colorrgb);
-        // console.log(colorrgb)
-        color = new THREE.Color(colorrgb);
+  for (let i = 0; i < count; i++) {
+    
+    if (typeof filterType === 'string') {
+      let colorrgb = coolwarm(ctsClipped[i]);
+      console.log(colorrgb);
+      color = new THREE.Color(colorrgb);
 
-        let scale = ctsClipped[index]*3+1;
+      let scale = ctsClipped[i]*5+1;
 
-        dummy1.scale.set(scale, scale, 1);
-        dummy2.scale.set(scale, scale, 1);
+      proj.scale.set(scale, scale, scale);
+      umap.scale.set(scale, scale, scale);
 
-      } else { // plotting celltypes, filterType is list of strings
-        if (filterType.includes(item.celltype) || filterType.length == 0) {
-          color = new THREE.Color(item.color);
-          dummy1.scale.set(2, 2, 1);
-          dummy2.scale.set(2, 2, 1);
-        } else {
-          color = new THREE.Color('#5e5e5e');
-          dummy1.scale.set(1, 1, 1);
-          dummy2.scale.set(1, 1, 1);
-        }
+    } else {
+      if (filterType.includes(jsonData[i]["clusters"]) || filterType.length == 0) {
+        color = new THREE.Color(jsonData[i]["clusters_colors"]);
+        proj.scale.set(5, 5, 5);
+        umap.scale.set(5, 5, 5);
+      } else {
+        color = new THREE.Color('#5e5e5e');
+        proj.scale.set(1, 1, 1);
+        umap.scale.set(1, 1, 1);
       }
-      
-      // Position for the first dot
-      // dummy1.position.x = item.y_spatial_norm * 20 * 5;
-      // dummy1.position.y = item.x_spatial_norm * 10 * 5;
+    }
 
-      dummy1.position.x = item.x_spatial_norm * -15 * 5;
-      dummy1.position.y = item.y_spatial_norm * -10 * 5;
-      dummy1.updateMatrix();
-      instancedMesh.setMatrixAt(index * 2, dummy1.matrix); // Use index * 2 for even indices
-      
-      instancedMesh.setColorAt(index * 2, color);
+    //plot projection
+    // proj.position.set(jsonData[i]["global_sphere0_norm"], jsonData[i]["global_sphere1_norm"], jsonData[i]["global_sphere2_norm"]);
+    proj.position.set(jsonData[i]["global_sphere0_norm"] * mod, jsonData[i]["global_sphere1_norm"] * mod, jsonData[i]["global_sphere2_norm"]*mod);
+    proj.updateMatrix();
+    instancedMesh.setMatrixAt(i, proj.matrix);
+    instancedMesh.setColorAt(i, color);
 
-      // Position for the second dot
-      let offsett = 2000;
-      dummy2.position.x = item.x_umap_norm * 10 * 10 + offsett;
-      dummy2.position.y = item.y_umap_norm * 10 * 10 ;
-      dummy2.updateMatrix();
-      instancedMesh.setMatrixAt(index * 2 + 1, dummy2.matrix); // Use index * 2 + 1 for odd indices
-      instancedMesh.setColorAt(index * 2 + 1, color);
-  });
+    //plot umap
+    umap.position.set(jsonData[i]["X_umap0_norm"]*5+200, jsonData[i]["X_umap1_norm"]*5, 10);
+    umap.updateMatrix();
+    instancedMesh.setMatrixAt(i+count, umap.matrix);
+    instancedMesh.setColorAt(i+count, color);
+  }
 
-  // Update the mesh
-  instancedMesh.instanceMatrix.needsUpdate = true;
-  instancedMesh.instanceColor.needsUpdate = true;
   scene.add(instancedMesh);
 }
 
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update(); // Only needed if controls.enableDamping is true
 
+    // Rotate the instanced mesh
+    // instancedMesh.rotation.x += 0.01;
+    // instancedMesh.rotation.y += 0.01;
 
+    // Render left side
+    renderer.setScissorTest(true);
+    renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
+    renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
+    renderer.render(scene, cameraOne);
+
+    // Render right side
+    renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+    renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+    renderer.render(scene, cameraTwo);
+
+    renderer.setScissorTest(false);
+}
 
 animate();
