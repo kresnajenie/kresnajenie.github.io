@@ -195,6 +195,15 @@ textbox.addEventListener('input', (e) => {
   filterSearchQuery(searchQuery);
 })
 
+const clearButton = document.getElementById('clearButton');
+clearButton.addEventListener('click', () => {
+  checkedCellTypes = [];
+  updateInstancedMesh(checkedCellTypes);
+  createCheckboxes(uniqueCellTypesWithColors);
+
+  textbox.value = '';
+})
+
 // For a more accurate colormap, consider using a library or a more complex function.
 function coolwarm(value) {
   // Define start and end colors (cool: blue, warm: red)
