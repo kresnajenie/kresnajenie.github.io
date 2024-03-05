@@ -16,33 +16,36 @@ let jsonData = [];
 
 // Asynchronous function to fetch data for a given column
 async function fetchDataFromAPI(columnName) {
-    try {
+  try {
     // const response = await fetch(`http://127.0.0.1:8000/getdata?col=${columnName}`);
     const response = await fetch(`https://fisheyes.techkyra.com/getdata?col=${columnName}`);
     // console.log(response)
     const data = await response.json();
     return data;
-    } catch (error) {
+  } catch (error) {
     console.error('Error fetching data for', columnName, error);
-    }
+  }
 }
 
 // Columns to be fetched
 const columns = [
-  'X_umap0_norm', 
-  'X_umap1_norm', 
-  'global_sphere0_norm', 
+  'X_umap0_norm',
+  'X_umap1_norm',
+  'global_sphere0_norm',
   'global_sphere1_norm',
-  'global_sphere2_norm', 
-  'global_sphere0', 
+  'global_sphere2_norm',
+  'global_sphere0',
   'global_sphere1',
-  'global_sphere2', 
-  'clusters', 
+  'global_sphere2',
+  'clusters',
   'clusters_colors'];
 
 let stats = new Stats();
 document.body.appendChild(stats.dom);
 
+let uniqueCellTypesWithColors = [];
+// get unique cell types and colors
+let cellTypeColorMap = new Map();
 // Fetch all data and combine
 Promise.all(columns.map(fetchDataFromAPI)).then(results => {
   // Combine data from all columns into one object
@@ -58,13 +61,18 @@ Promise.all(columns.map(fetchDataFromAPI)).then(results => {
   console.log("trfdata")
   console.log(transformedData)
 
+  let celltypeList = transformedData["clusters"].filter((value, index, array) => {
+    return array.indexOf(value) === index;
+  })
+
+  console.log(celltypeList);
 
   for (let i = 0; i < transformedData.clusters.length; i++) {
-      let row = {};
-      for (let key in transformedData) {
-          row[key] = transformedData[key][i];
-      }
-      jsonData.push(row);
+    let row = {};
+    for (let key in transformedData) {
+      row[key] = transformedData[key][i];
+    }
+    jsonData.push(row);
   }
 
   console.log("jsondata")
@@ -73,79 +81,119 @@ Promise.all(columns.map(fetchDataFromAPI)).then(results => {
   updateInstancedMesh();
 
   // get unique cell types and colors
-  let cellTypeColorMap = new Map();
+  cellTypeColorMap = new Map();
 
   jsonData.forEach(item => {
-      // Check if the celltype is already added to the map
-      if (!cellTypeColorMap.has(item.clusters)) {
-          cellTypeColorMap.set(item.clusters, item.clusters_colors);
-      }
+    // Check if the celltype is already added to the map
+    if (!cellTypeColorMap.has(item.clusters)) {
+      cellTypeColorMap.set(item.clusters, item.clusters_colors);
+    }
   });
 
-  let uniqueCellTypesWithColors = Array.from(cellTypeColorMap, ([celltype, color]) => [celltype, color]);
+  uniqueCellTypesWithColors = Array.from(cellTypeColorMap, ([celltype, color]) => [celltype, color]);
+
+  console.log(uniqueCellTypesWithColors);
+
   createCheckboxes(uniqueCellTypesWithColors);
 }).catch(error => {
   console.error('Error combining data:', error);
 });
 
+
+
 // Toggle the checkbox container visibility
 document.getElementById('toggleCheckboxContainer').addEventListener('click', () => {
-    const checkboxContainer = document.getElementById('checkboxContainer');
-    checkboxContainer.style.display = checkboxContainer.style.display === 'none' ? 'block' : 'none';
-  });
+  const checkboxContainer = document.getElementById('checkboxContainer');
+  checkboxContainer.style.display = checkboxContainer.style.display === 'none' ? 'block' : 'none';
+});
 
-  // Array to hold the currently checked cell types
+// Array to hold the currently checked cell types
 let checkedCellTypes = [];
 
 // Function to update instanced mesh based on checked items
 function updateCheckedItems(celltype, isChecked) {
-    if (isChecked) {
-        // Add celltype to the list if checked
-        checkedCellTypes.push(celltype);
-    } else {
-        // Remove celltype from the list if unchecked
-        checkedCellTypes = checkedCellTypes.filter(item => item !== celltype);
-    }
-    updateInstancedMesh(checkedCellTypes);
-}
+  if (isChecked) {
+    // Add celltype to the list if checked
+    checkedCellTypes.push(celltype);
+  } else {
+    // Remove celltype from the list if unchecked
+    checkedCellTypes = checkedCellTypes.filter(item => item !== celltype);
+  }
+  console.log(checkedCellTypes);
 
+  updateInstancedMesh(checkedCellTypes);
+}
 
 // Function to create checkboxes
 function createCheckboxes(cellTypesWithColors) {
-  const container = document.getElementById('checkboxContainer');
+  const checkboxes = document.getElementById('checkboxes');
+
+  checkboxes.innerHTML = ''; // clear checkbox container
 
   // Sort cellTypesWithColors alphabetically by celltype
   cellTypesWithColors.sort((a, b) => {
-      if (a[0].toLowerCase() < b[0].toLowerCase()) return -1;
-      if (a[0].toLowerCase() > b[0].toLowerCase()) return 1;
-      return 0;
+    if (a[0].toLowerCase() < b[0].toLowerCase()) return -1;
+    if (a[0].toLowerCase() > b[0].toLowerCase()) return 1;
+    return 0;
   });
 
   cellTypesWithColors.forEach(([celltype, color]) => {
-      // Create checkbox
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.id = celltype;
-      checkbox.value = celltype;
+    // Create checkbox
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = celltype;
+    checkbox.value = celltype;
 
-      // Create label
-      const label = document.createElement('label');
-      label.htmlFor = celltype;
-      label.textContent = celltype;
-      label.style.color = color;
+    if (checkedCellTypes.includes(celltype)) {
+      checkbox.checked = true;
+    }
 
-      // Append checkbox and label to container
-      container.appendChild(checkbox);
-      container.appendChild(label);
-      container.appendChild(document.createElement('br'));
+    // Create label
+    const label = document.createElement('label');
+    label.htmlFor = celltype;
+    label.textContent = celltype;
+    label.style.color = color;
 
-      // Attach event listener
-      checkbox.addEventListener('change', (e) => {
-          updateCheckedItems(celltype, e.target.checked);
-      });
+    const checkboxGroup = document.createElement('checkboxGroup');
+
+    // Append checkbox and label to container
+    checkboxGroup.appendChild(checkbox);
+    checkboxGroup.appendChild(label);
+    checkboxGroup.appendChild(document.createElement('br'));
+
+    checkboxes.appendChild(checkboxGroup);
+
+    // Attach event listener
+    checkbox.addEventListener('change', (e) => {
+      updateCheckedItems(celltype, e.target.checked);
+    });
   });
 }
 
+// filters by search query
+function filterSearchQuery(searchQuery) {
+  const container = document.getElementById('checkboxes'); // container that has the checkboxes 
+
+  // if has query string
+  if (searchQuery) {
+
+    const filteredCellType = uniqueCellTypesWithColors.filter(([celltype, color]) => {
+      return celltype.toLowerCase().startsWith(searchQuery); // checks if has substring
+    })
+
+    createCheckboxes(filteredCellType);
+  } else {
+    createCheckboxes(uniqueCellTypesWithColors); // reset to show all
+  }
+}
+
+// autocomplete checkboxes
+const textbox = document.getElementById('myTextbox');
+textbox.addEventListener('input', (e) => {
+  const searchQuery = e.target.value.toLowerCase(); // holds search query
+
+  filterSearchQuery(searchQuery);
+})
 
 // For a more accurate colormap, consider using a library or a more complex function.
 function coolwarm(value) {
@@ -154,24 +202,16 @@ function coolwarm(value) {
   const middleColor = { r: 255, g: 255, b: 255 }; // White
   const endColor = { r: 255, g: 0, b: 0 }; // Red
 
-  if (value <0.5) { // blue to white
-    return "rgb(" + Math.floor(middleColor.r*value*2) + ", " + Math.floor(middleColor.g*value*2) + ", " + startColor.b + ")"
+  if (value < 0.5) { // blue to white
+    return "rgb(" + Math.floor(middleColor.r * value * 2) + ", " + Math.floor(middleColor.g * value * 2) + ", " + startColor.b + ")"
   } else if (value == 0.5) { // white
     return "rgb(" + middleColor.r + ", " + middleColor.g + ", " + middleColor.b + ")"
   } else { // white to red
-    return "rgb(" + endColor.r + ", " + Math.floor(middleColor.g-(middleColor.g*(value-0.5)*2)) + ", " + Math.floor(middleColor.b-(middleColor.b*(value-0.5)*2)) + ")"
+    return "rgb(" + endColor.r + ", " + Math.floor(middleColor.g - (middleColor.g * (value - 0.5) * 2)) + ", " + Math.floor(middleColor.b - (middleColor.b * (value - 0.5) * 2)) + ")"
   }
 
 
 }
-
-// Add event listener to the button
-document.getElementById('myButton').addEventListener('click', () => {
-  // Get the value from the textbox
-  const textboxValue = document.getElementById('myTextbox').value;
-
-  updateInstancedMesh(textboxValue);
-});
 
 function calculate99thPercentile(arr) {
   // Create a copy of the array and sort the copy
@@ -205,11 +245,12 @@ const cameraTwo = new THREE.PerspectiveCamera(75, cameraTwoAspectRatio, 0.1, 100
 
 
 
+// how far away the cameras are
 const offset = 1000;
 // Position the cameras
-cameraOne.position.x = 50;
+cameraOne.position.x = 0;
 cameraOne.position.y = 50;
-cameraOne.position.z = 200;
+cameraOne.position.z = 200; // how far away the camera is
 
 cameraTwo.position.x = offset;
 cameraTwo.position.z = 180;
@@ -225,36 +266,36 @@ controls.dampingFactor = 0.25;
 controls.update();
 
 function switchControls() {
-    const isCameraOneActive = controls.object === cameraOne;
-    controls.dispose(); // Dispose current controls
+  const isCameraOneActive = controls.object === cameraOne;
+  controls.dispose(); // Dispose current controls
 
-    if (isCameraOneActive) {
-        // Switch to cameraTwo
-        controls = new OrbitControls(cameraTwo, renderer.domElement);
-        // Set specific properties for cameraTwo controls
-        controls.enableRotate = false; // Disable rotation for cameraTwo
-        controls.enableZoom = true; // Assuming you want zoom
-        controls.target.copy(sharedTarget); // Ensure cameraTwo looks at the shared target
-        controls.enablePan = true; // Enable panning
-    } else {
-        // Switch back to cameraOne
-        controls = new OrbitControls(cameraOne, renderer.domElement);
-        // Reset or set specific properties for cameraOne controls
-        controls.enableRotate = true;
-        controls.enableZoom = true;
-        controls.target.copy(sharedTarget); // Ensure cameraOne looks at the shared target
-    }
+  if (isCameraOneActive) {
+    // Switch to cameraTwo
+    controls = new OrbitControls(cameraTwo, renderer.domElement);
+    // Set specific properties for cameraTwo controls
+    controls.enableRotate = false; // Disable rotation for cameraTwo
+    controls.enableZoom = true; // Assuming you want zoom
+    controls.target.copy(sharedTarget); // Ensure cameraTwo looks at the shared target
+    controls.enablePan = true; // Enable panning
+  } else {
+    // Switch back to cameraOne
+    controls = new OrbitControls(cameraOne, renderer.domElement);
+    // Reset or set specific properties for cameraOne controls
+    controls.enableRotate = true;
+    controls.enableZoom = true;
+    controls.target.copy(sharedTarget); // Ensure cameraOne looks at the shared target
+  }
 
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.25;
-    controls.update(); // Important to apply the changes made to controls
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.25;
+  controls.update(); // Important to apply the changes made to controls
 }
 
 // Bind switchControls to a keyboard event (e.g., pressing 'c')
 document.addEventListener('keydown', (event) => {
-    // if (event.key === 'c') {
-    //     switchControls();
-    // }
+  if (event.key === 'c' && document.activeElement != textbox) { // so it doesn't switch controls when typing
+    switchControls();
+  }
 });
 
 // Geometry and material for the instanced mesh
@@ -292,8 +333,8 @@ async function updateInstancedMesh(filterType = []) {
 
   let color;
 
-  // when plotting gene
-  let cts;
+  // when plotting gene (diff is just color and size)
+  let cts; // stands for counts
   let ctsClipped;
   let nmax;
   if (typeof filterType === 'string') {
@@ -309,47 +350,50 @@ async function updateInstancedMesh(filterType = []) {
       console.log(ctsClipped);
 
     } catch (error) {
-        // Handle errors if the promise is rejected
-        console.error('Error fetching data:', error);
+      // Handle errors if the promise is rejected
+      console.error('Error fetching data:', error);
     }
   }
 
   let mod = 100;
   let umapmod = 0.5;
 
+  // plotting function
   for (let i = 0; i < count; i++) {
-    
+
+    // plotting gene
     if (typeof filterType === 'string') {
       let colorrgb = coolwarm(ctsClipped[i]);
       console.log(colorrgb);
       color = new THREE.Color(colorrgb);
 
-      let scale = ctsClipped[i]*5+1;
+      let scale = ctsClipped[i] * 5 + 1;
 
       proj.scale.set(scale, scale, scale);
-      umap.scale.set(scale*umapmod, scale*umapmod, scale*umapmod);
+      umap.scale.set(scale * umapmod, scale * umapmod, scale * umapmod);
 
     } else {
+      // plotting cell type
       if (filterType.includes(jsonData[i]["clusters"]) || filterType.length == 0) {
         color = new THREE.Color(jsonData[i]["clusters_colors"]);
         proj.scale.set(5, 5, 5);
-        umap.scale.set(5*umapmod, 5*umapmod, 5*umapmod);
+        umap.scale.set(5 * umapmod, 5 * umapmod, 5 * umapmod);
       } else {
         color = new THREE.Color('#5e5e5e');
         proj.scale.set(1, 1, 1);
-        umap.scale.set(1*umapmod, 1*umapmod, 1*umapmod);
+        umap.scale.set(1 * umapmod, 1 * umapmod, 1 * umapmod);
       }
     }
 
     //plot projection
     // proj.position.set(jsonData[i]["global_sphere0_norm"], jsonData[i]["global_sphere1_norm"], jsonData[i]["global_sphere2_norm"]);
-    proj.position.set(jsonData[i]["global_sphere0_norm"] * mod, jsonData[i]["global_sphere1_norm"] * mod, jsonData[i]["global_sphere2_norm"]*mod);
+    proj.position.set(jsonData[i]["global_sphere0_norm"] * mod, jsonData[i]["global_sphere1_norm"] * mod, jsonData[i]["global_sphere2_norm"] * mod);
     proj.updateMatrix();
     instancedMesh.setMatrixAt(i, proj.matrix);
     instancedMesh.setColorAt(i, color);
 
     //plot umap
-    umap.position.set(jsonData[i]["X_umap0_norm"]*5+offset, jsonData[i]["X_umap1_norm"]*5, 10);
+    umap.position.set(jsonData[i]["X_umap0_norm"] * 5 + offset, jsonData[i]["X_umap1_norm"] * 5, 10);
     umap.updateMatrix();
     instancedMeshUmap.setMatrixAt(i, umap.matrix);
     instancedMeshUmap.setColorAt(i, color);
@@ -361,7 +405,7 @@ async function updateInstancedMesh(filterType = []) {
 
 // // Animation loop
 // function animate() {
-  
+
 //     requestAnimationFrame(animate);
 //     controls.update(); // Only needed if controls.enableDamping is true
 
@@ -406,17 +450,17 @@ function animate() {
   const cameraQuaternion = cameraOne.quaternion;
 
   for (let i = 0; i < jsonData.length * 2; i++) {
-      const matrix = new THREE.Matrix4();
-      const position = new THREE.Vector3();
-      const scale = new THREE.Vector3();
-      
-      // Extract position and scale from the current instance matrix
-      instancedMesh.getMatrixAt(i, matrix);
-      matrix.decompose(position, new THREE.Quaternion(), scale);
+    const matrix = new THREE.Matrix4();
+    const position = new THREE.Vector3();
+    const scale = new THREE.Vector3();
 
-      // Rebuild the matrix using the camera's quaternion for rotation
-      matrix.compose(position, cameraQuaternion, scale);
-      instancedMesh.setMatrixAt(i, matrix);
+    // Extract position and scale from the current instance matrix
+    instancedMesh.getMatrixAt(i, matrix);
+    matrix.decompose(position, new THREE.Quaternion(), scale);
+
+    // Rebuild the matrix using the camera's quaternion for rotation
+    matrix.compose(position, cameraQuaternion, scale);
+    instancedMesh.setMatrixAt(i, matrix);
   }
 
   instancedMesh.instanceMatrix.needsUpdate = true; // Important!
