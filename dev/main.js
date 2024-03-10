@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Stats from 'three/addons/libs/stats.module.js';
+import 'bootstrap';
 
 // Scene
 const scene = new THREE.Scene();
@@ -10,9 +11,12 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+/* FETCH API DATA */
+
 // will be all data here
 let jsonData = [];
 
+let geneData = [];
 
 // Asynchronous function to fetch data for a given column
 async function fetchDataFromAPI(columnName) {
@@ -38,10 +42,11 @@ const columns = [
   'global_sphere1',
   'global_sphere2',
   'clusters',
-  'clusters_colors'];
+  'clusters_colors'
+];
 
-let stats = new Stats();
-document.body.appendChild(stats.dom);
+// let stats = new Stats();
+// document.body.appendChild(stats.dom);
 
 let uniqueCellTypesWithColors = [];
 // get unique cell types and colors
@@ -94,17 +99,49 @@ Promise.all(columns.map(fetchDataFromAPI)).then(results => {
 
   console.log(uniqueCellTypesWithColors);
 
-  createCheckboxes(uniqueCellTypesWithColors);
+  createCellCheckboxes(uniqueCellTypesWithColors);
+
 }).catch(error => {
   console.error('Error combining data:', error);
 });
 
+// fetch gene data
+fetch("https://fisheyes.techkyra.com/getdata?col=genes")
+  .then(data => data.json())
+  .then(results => {
+    let myString = results["data"];
+    myString = myString.replace(/'/g, '"'); // Replace single quotes with double quotes
+    geneData = JSON.parse(myString);
+    console.log("gene", geneData);
 
+    createGeneCheckboxes(geneData);
+  });
+
+/* CHECK BOX FUNCTIONALITY */
+
+const cellCheckbox = document.getElementById("cellCheckbox");
+const geneCheckbox = document.getElementById('geneCheckbox');
 
 // Toggle the checkbox container visibility
-document.getElementById('toggleCheckboxContainer').addEventListener('click', () => {
-  const checkboxContainer = document.getElementById('checkboxContainer');
-  checkboxContainer.style.display = checkboxContainer.style.display === 'none' ? 'block' : 'none';
+document.getElementById('toggleCellCheckbox').addEventListener('click', () => {
+
+  cellCheckbox.style.display = cellCheckbox.style.display === 'none' ? 'block' : 'none';
+
+  // check if gene checkbox is visible, if yes disable it
+  if (geneCheckbox.style.display === 'block') {
+    geneCheckbox.style.display = 'none';
+  }
+});
+
+// Toggle gene checkbox container
+document.getElementById('toggleGeneCelltype').addEventListener('click', () => {
+  const geneCheckbox = document.getElementById('geneCheckbox');
+  geneCheckbox.style.display = geneCheckbox.style.display === 'none' ? 'block' : 'none';
+
+  // check if cell checkbox is visible, if yes disable it
+  if (cellCheckbox.style.display === 'block') {
+    cellCheckbox.style.display = 'none';
+  }
 });
 
 // Array to hold the currently checked cell types
@@ -125,8 +162,8 @@ function updateCheckedItems(celltype, isChecked) {
 }
 
 // Function to create checkboxes
-function createCheckboxes(cellTypesWithColors) {
-  const checkboxes = document.getElementById('checkboxes');
+function createCellCheckboxes(cellTypesWithColors) {
+  const checkboxes = document.getElementById('cellCheckboxes');
 
   checkboxes.innerHTML = ''; // clear checkbox container
 
@@ -141,6 +178,7 @@ function createCheckboxes(cellTypesWithColors) {
     // Create checkbox
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
+    checkbox.className = 'box';
     checkbox.id = celltype;
     checkbox.value = celltype;
 
@@ -170,9 +208,55 @@ function createCheckboxes(cellTypesWithColors) {
   });
 }
 
+function createGeneCheckboxes(geneList) {
+  const checkboxes = document.getElementById('geneCheckboxes');
+
+  geneCheckboxes.innerHTML = ''; // clear checkbox container
+
+  // Sort geneList alphabetically by gene
+  geneList.sort((a, b) => {
+    if (a[0].toLowerCase() < b[0].toLowerCase()) return -1;
+    if (a[0].toLowerCase() > b[0].toLowerCase()) return 1;
+    return 0;
+  });
+
+  geneList.forEach((gene) => {
+    // Create checkbox
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'box';
+    checkbox.id = gene;
+    checkbox.value = gene;
+
+    // if (checkedCellTypes.includes(gene)) {
+    //   checkbox.checked = true;
+    // }
+
+    // Create label
+    const label = document.createElement('label');
+    label.htmlFor = gene;
+    label.textContent = gene;
+    label.style.color = "white";
+
+    const checkboxGroup = document.createElement('geneCheckboxGroup');
+
+    // Append checkbox and label to container
+    checkboxGroup.appendChild(checkbox);
+    checkboxGroup.appendChild(label);
+    checkboxGroup.appendChild(document.createElement('br'));
+
+    checkboxes.appendChild(checkboxGroup);
+
+    // Attach event listener
+    // checkbox.addEventListener('change', (e) => {
+    //   updateCheckedItems(celltype, e.target.checked);
+    // });
+  });
+}
+
 // filters by search query
-function filterSearchQuery(searchQuery) {
-  const container = document.getElementById('checkboxes'); // container that has the checkboxes 
+function filterCellSearchQuery(searchQuery) {
+  const alert = document.getElementById('cellNotFound');
 
   // if has query string
   if (searchQuery) {
@@ -181,28 +265,81 @@ function filterSearchQuery(searchQuery) {
       return celltype.toLowerCase().startsWith(searchQuery); // checks if has substring
     })
 
-    createCheckboxes(filteredCellType);
+    console.log(filteredCellType);
+
+    createCellCheckboxes(filteredCellType);
+
+    // show the alert if no filtered cell type
+    if (filteredCellType.length === 0) {
+      console.log("here");
+      alert.style.visibility = "visible"
+    } else {
+      alert.style.visibility = "hidden"
+    }
   } else {
-    createCheckboxes(uniqueCellTypesWithColors); // reset to show all
+    createCellCheckboxes(uniqueCellTypesWithColors); // reset to show all
   }
 }
 
 // autocomplete checkboxes
-const textbox = document.getElementById('myTextbox');
-textbox.addEventListener('input', (e) => {
+const cellTextbox = document.getElementById('cellTextbox');
+cellTextbox.addEventListener('input', (e) => {
   const searchQuery = e.target.value.toLowerCase(); // holds search query
 
-  filterSearchQuery(searchQuery);
+  filterCellSearchQuery(searchQuery);
 })
 
-const clearButton = document.getElementById('clearButton');
-clearButton.addEventListener('click', () => {
+const cellClearButton = document.getElementById('cellClearButton');
+cellClearButton.addEventListener('click', () => {
   checkedCellTypes = [];
   updateInstancedMesh(checkedCellTypes);
-  createCheckboxes(uniqueCellTypesWithColors);
+  createCellCheckboxes(uniqueCellTypesWithColors);
 
-  textbox.value = '';
+  cellTextbox.value = '';
 })
+
+function filterGeneSearchQuery(searchQuery) {
+  const alert = document.getElementById('geneNotFound');
+
+  // if has query string
+  if (searchQuery) {
+
+    const filteredGene = geneData.filter((gene) => {
+      return gene.toLowerCase().startsWith(searchQuery); // checks if has substring
+    })
+
+    console.log(filteredGene);
+
+    createGeneCheckboxes(filteredGene);
+
+    // show the alert if no filtered cell type
+    if (filteredGene.length === 0) {
+      console.log("here");
+      alert.style.visibility = "visible"
+    } else {
+      alert.style.visibility = "hidden"
+    }
+  } else {
+    createCellCheckboxes(geneData); // reset to show all
+  }
+}
+
+
+const geneTextbox = document.getElementById('geneTextbox');
+geneTextbox.addEventListener('input', (e) => {
+  const searchQuery = e.target.value.toLowerCase();
+
+  console.log(searchQuery);
+
+  filterGeneSearchQuery(searchQuery);
+});
+
+// const geneClearButton = document.getElementById('geneClearButton');
+// geneClearButton.addEventListener('click', () => {
+//   createGeneCheckboxes([]);
+// });
+
+
 
 // For a more accurate colormap, consider using a library or a more complex function.
 function coolwarm(value) {
@@ -218,8 +355,6 @@ function coolwarm(value) {
   } else { // white to red
     return "rgb(" + endColor.r + ", " + Math.floor(middleColor.g - (middleColor.g * (value - 0.5) * 2)) + ", " + Math.floor(middleColor.b - (middleColor.b * (value - 0.5) * 2)) + ")"
   }
-
-
 }
 
 function calculate99thPercentile(arr) {
@@ -487,7 +622,7 @@ function animate() {
 
   renderer.setScissorTest(false); // Disable scissor test after rendering
 
-  stats.update();
+  // stats.update();
 }
 
 animate();

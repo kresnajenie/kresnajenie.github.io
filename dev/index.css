@@ -1,50 +1,108 @@
+
 * {
   box-sizing: border-box;
 }
 
 body {
   font: 16px Arial;
-}
-
-body {
   margin: 0;
 }
-#toggleCheckboxContainer {
+
+/* Contains all checkbox functionality */
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-content: center;
+
+  gap: 7px;
+
   position: absolute;
-  top: 50px;
-  left: 10px;
-  z-index: 100;
-  width: 100px;
+
+  margin: 10px;
+  width: 20%;
+}
+
+/* Button styling */
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.toggles {
+  background-color: rgb(97, 97, 97);
+  color: white;
 
   justify-content: center;
   align-items: center;
+
+  width: 100%;
 }
+
+.toggles:hover {
+  background-color: rgb(255, 255, 255);
+  color: black;
+}
+
 .checkbox-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
   gap: 5px;
-  position: absolute;
-  top: 100px;
-  left: 10px;
-  z-index: 100;
+
   background-color: rgba(0, 0, 0, 0.8);
 
   border: rgba(58, 58, 58, 0.5) solid;
-  padding: 10px;
+  padding: 0px 10px 10px 10px;
   border-radius: 5px;
-  overflow-y: auto; /* Enable vertical scrolling */
   max-height: 70vh; /* Set maximum height relative to viewport */
+  scrollbar-color: dark;
+
+  overflow: auto;
 }
-#clearButton {
+
+.checkbox-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+.checkbox-container::-webkit-scrollbar-thumb {
+  background-color: rgb(65, 65, 65);
+  border-radius: 20px
+}
+
+.input-elements {
+  position: -webkit-sticky; /* Safari */
+  position: sticky;
+  top: 0;
+
+  height: 100%;
+  background-color: black;
+}
+
+.clearButton {
   width: 100%;
+  height: 25px;
+
+  line-height: 10px;
 
   margin-top: 5px;
   margin-bottom: 5px;
 }
 
-#myTextbox {
+.textInput {
   width: 100%;
+  height: 40px;
   border-radius: 5px;
+}
+
+.box {
+  margin-right: 5px;
+}
+
+.notfound {
+  visibility: hidden;
 }
 
 .plus-jakarta-sans-regular {
