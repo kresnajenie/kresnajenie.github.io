@@ -320,7 +320,7 @@ function filterGeneSearchQuery(searchQuery) {
       alert.style.visibility = "hidden"
     }
   } else {
-    createCellCheckboxes(geneData); // reset to show all
+    createGeneCheckboxes(geneData); // reset to show all
   }
 }
 
