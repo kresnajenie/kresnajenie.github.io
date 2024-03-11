@@ -114,7 +114,7 @@ fetch("https://fisheyes.techkyra.com/getdata?col=genes")
     geneData = JSON.parse(myString);
     console.log("gene", geneData);
 
-    createGeneCheckboxes(geneData);
+    createGeneRadio(geneData);
   });
 
 /* CHECK BOX FUNCTIONALITY */
@@ -208,10 +208,10 @@ function createCellCheckboxes(cellTypesWithColors) {
   });
 }
 
-function createGeneCheckboxes(geneList) {
-  const checkboxes = document.getElementById('geneCheckboxes');
+function createGeneRadio(geneList) {
+  const radios = document.getElementById('geneRadio');
 
-  geneCheckboxes.innerHTML = ''; // clear checkbox container
+  radios.innerHTML = ''; // clear checkbox container
 
   // Sort geneList alphabetically by gene
   geneList.sort((a, b) => {
@@ -222,11 +222,12 @@ function createGeneCheckboxes(geneList) {
 
   geneList.forEach((gene) => {
     // Create checkbox
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'box';
-    checkbox.id = gene;
-    checkbox.value = gene;
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.className = 'box';
+    radio.id = gene;
+    radio.value = gene;
+    radio.name = "radio";
 
     // if (checkedCellTypes.includes(gene)) {
     //   checkbox.checked = true;
@@ -238,14 +239,14 @@ function createGeneCheckboxes(geneList) {
     label.textContent = gene;
     label.style.color = "white";
 
-    const checkboxGroup = document.createElement('geneCheckboxGroup');
+    const radioGroup = document.createElement('geneRadioGroup');
 
     // Append checkbox and label to container
-    checkboxGroup.appendChild(checkbox);
-    checkboxGroup.appendChild(label);
-    checkboxGroup.appendChild(document.createElement('br'));
+    radioGroup.appendChild(radio);
+    radioGroup.appendChild(label);
+    radioGroup.appendChild(document.createElement('br'));
 
-    checkboxes.appendChild(checkboxGroup);
+    radios.appendChild(radioGroup);
 
     // Attach event listener
     // checkbox.addEventListener('change', (e) => {
@@ -310,7 +311,7 @@ function filterGeneSearchQuery(searchQuery) {
 
     console.log(filteredGene);
 
-    createGeneCheckboxes(filteredGene);
+    createGeneRadio(filteredGene);
 
     // show the alert if no filtered cell type
     if (filteredGene.length === 0) {
@@ -320,10 +321,9 @@ function filterGeneSearchQuery(searchQuery) {
       alert.style.visibility = "hidden"
     }
   } else {
-    createGeneCheckboxes(geneData); // reset to show all
+    createGeneRadio(geneData); // reset to show all
   }
 }
-
 
 const geneTextbox = document.getElementById('geneTextbox');
 geneTextbox.addEventListener('input', (e) => {
@@ -334,10 +334,11 @@ geneTextbox.addEventListener('input', (e) => {
   filterGeneSearchQuery(searchQuery);
 });
 
-// const geneClearButton = document.getElementById('geneClearButton');
-// geneClearButton.addEventListener('click', () => {
-//   createGeneCheckboxes([]);
-// });
+const geneClearButton = document.getElementById('geneClearButton');
+geneClearButton.addEventListener('click', () => {
+  geneTextbox.value = '';
+  createGeneRadio(geneData)
+});
 
 
 
