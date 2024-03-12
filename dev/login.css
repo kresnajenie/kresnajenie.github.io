@@ -15,11 +15,6 @@ body {
     background-color: #343a40; 
 }
 
-.login {
-    justify-content: center;
-    align-items: center;
-}
-
 .container {
     width: 300px;
     margin: auto;
