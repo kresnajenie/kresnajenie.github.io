@@ -260,10 +260,6 @@ function createGeneRadio(geneList) {
     radio.value = gene;
     radio.name = "radio";
 
-    // if (checkedCellTypes.includes(gene)) {
-    //   checkbox.checked = true;
-    // }
-
     // Create label
     const label = document.createElement('label');
     label.htmlFor = gene;
@@ -280,9 +276,9 @@ function createGeneRadio(geneList) {
     radios.appendChild(radioGroup);
 
     // Attach event listener
-    // checkbox.addEventListener('change', (e) => {
-    //   updateCheckedItems(celltype, e.target.checked);
-    // });
+    radio.addEventListener('change', (e) => {
+      updateRadioItem(gene, e.target.checked);
+    });
   });
 }
 
@@ -368,9 +364,19 @@ geneTextbox.addEventListener('input', (e) => {
 const geneClearButton = document.getElementById('geneClearButton');
 geneClearButton.addEventListener('click', () => {
   geneTextbox.value = '';
+  updateInstancedMesh([]);
   createGeneRadio(geneData)
 });
 
+// Function to update instanced mesh based on checked items
+function updateRadioItem(gene, isChecked) {
+
+  if (isChecked) {
+    // Add celltype to the list if checked
+    updateInstancedMesh(gene.toLowerCase());
+  }
+  console.log(gene);
+}
 
 
 // For a more accurate colormap, consider using a library or a more complex function.
