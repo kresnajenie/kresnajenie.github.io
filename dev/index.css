@@ -10,6 +10,10 @@ body {
 
 /* Contains all checkbox functionality */
 
+.navbar-nav { 
+  margin-left: auto; 
+} 
+
 .filter {
   display: flex;
   flex-direction: column;

@@ -19,10 +19,39 @@
         }
       }
     </script>
-    <title>fisheyes by kj</title>
+    <title>FISHEYES</title>
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#"><b>FISHEYES</b></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="#">CBM2</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="#">Upload</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="loginPageButton" href="login">Login</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <script>
+      document.getElementById('loginPageButton').addEventListener('click', function() {
+          // Redirect to the new page
+          window.location.href = 'login.html';
+      });
+    </script>
+
+
     <div class="filter">
       <div class="button-container">
         <button type="button" class="toggles btn" id="toggleCellCheckbox">Toggle Celltype Filters</button>
