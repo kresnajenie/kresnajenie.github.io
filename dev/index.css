@@ -14,16 +14,17 @@ body {
   margin-left: auto; 
 } 
 
+
 .filter {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-content: center;
+  justify-content: left;
+  align-content: left;
 
   gap: 7px;
 
   position: absolute;
-
+  height: auto;
   margin: 10px;
   width: 20%;
 }
@@ -33,18 +34,32 @@ body {
 .button-container {
   display: flex;
   flex-direction: column;
-
+  align-items: left;
   gap: 5px;
 }
 
 .toggles {
+  /* background-color: rgb(97, 97, 97);
+  color: white;
+  justify-content: center;
+  align-items: center;
+  transform: rotate(-90deg);
+  white-space: nowrap;
+  height: auto;
+  width: 10%; */
+
   background-color: rgb(97, 97, 97);
   color: white;
 
+  display: flex;
   justify-content: center;
   align-items: center;
+  text-align: center;
 
-  width: 100%;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: 11px;
 }
 
 .toggles:hover {
@@ -121,3 +136,35 @@ body {
   font-weight: 700; /* Bold weight */
   font-style: normal;
 }
+
+.icon {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  gap: 5px;
+}
+
+.iconBtn {
+  background-color: rgb(97, 97, 97);
+  color: white;
+
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+}
+
+.iconBtn:hover {
+  background-color: rgb(255, 255, 255);
+  color: black;
+}
+
+.iconBtn svg {
+  width: 100%; /* Adjust size as needed */
+  height: auto; /* Maintain aspect ratio */
+  fill: #fff; /* Icon color */
+}
+

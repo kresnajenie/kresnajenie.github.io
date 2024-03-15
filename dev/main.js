@@ -580,7 +580,8 @@ async function updateInstancedMesh(filterType = []) {
     instancedMeshUmap.setMatrixAt(i, umap.matrix);
     instancedMeshUmap.setColorAt(i, color);
   }
-
+  
+  instancedMesh.scale.set(2, 2, 2);
   scene.add(instancedMesh);
   scene.add(instancedMeshUmap);
 }
