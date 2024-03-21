@@ -141,7 +141,7 @@ async function load(prefix) {
     });
 }
 
-await load(prefix);
+load(prefix);
 
 function onResize() {
   console.log('You resized the browser window!');
