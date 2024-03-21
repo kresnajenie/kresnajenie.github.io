@@ -18,18 +18,14 @@ let jsonData = [];
 
 let geneData = [];
 
-// Asynchronous function to fetch data for a given column
-async function fetchDataFromAPI(columnName) {
-  try {
-    // const response = await fetch(`http://127.0.0.1:8000/getdata?col=${columnName}`);
-    const response = await fetch(`https://fisheyes.techkyra.com/getdata?col=${columnName}`);
-    // console.log(response)
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching data for', columnName, error);
-  }
-}
+let prefix = "50pe";
+
+let uniqueCellTypesWithColors;
+
+let pallete;
+
+// Array to hold the currently checked cell types
+let checkedCellTypes = [];
 
 // Columns to be fetched
 const columns = [
@@ -38,86 +34,123 @@ const columns = [
   'global_sphere0_norm',
   'global_sphere1_norm',
   'global_sphere2_norm',
-  'global_sphere0',
-  'global_sphere1',
-  'global_sphere2',
   'clusters',
-  'clusters_colors'
 ];
+
+const pal = [
+  'clusters_pal'
+];
+
+const dropdownMenuButton = document.getElementById("dropdownMenuButton");
+
+dropdownMenuButton.innerHTML = prefix;
+
+document.querySelectorAll('.dropdown-item').forEach(item => {
+
+  item.addEventListener('click', async () => {
+    // Get the value of the selected item
+    prefix = item.innerHTML;
+
+    dropdownMenuButton.innerHTML = prefix;
+
+    jsonData = [];
+    geneData = [];
+    uniqueCellTypesWithColors = [];
+
+    checkedCellTypes = [];
+
+    await load(prefix);
+    updateInstancedMesh([]);
+  });
+});
+
+// Asynchronous function to fetch data for a given column
+async function fetchDataFromAPI(columnName, prefix = prefix) {
+  try {
+    // const response = await fetch(`http://127.0.0.1:8000/getdata?col=${columnName}`);
+    const response = await fetch(`https://fisheyes.techkyra.com/getdata?col=${prefix}-${columnName}`);
+    // console.log(response)
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching data for', columnName, error);
+  }
+}
+
+async function load(prefix) {
+
+  // load palette
+  // Example JSON object with cell types as keys and colors as values
+  Promise.all(pal.map((p) => fetchDataFromAPI(p, prefix))).then(results => {
+
+    // Convert JSON object to a readable string
+    pallete = JSON.parse(results[0].data, null, 2);
+    uniqueCellTypesWithColors = Object.keys(pallete).map((celltype) => [celltype, pallete[celltype]]);
+
+    // Output the readable JSON string
+    console.log("haloooo")
+    console.log(pallete);
+
+    createCellCheckboxes(uniqueCellTypesWithColors);
+    // createCheckboxes(pallete);
+  }).catch(error => {
+    console.error('Error combining data:', error);
+  });
+
+  // Fetch all data and combine
+  Promise.all(columns.map((col) => fetchDataFromAPI(col, prefix))).then(results => {
+    // Combine data from all columns into one object
+    let transformedData = {};
+
+    console.log(results);
+
+    columns.forEach((col, index) => {
+      let myString = results[index]["data"];
+      myString = myString.replace(/'/g, '"'); // Replace single quotes with double quotes
+      transformedData[col] = JSON.parse(myString);
+    });
+    console.log("trfdata")
+    console.log(transformedData)
+
+    for (let i = 0; i < transformedData.clusters.length; i++) {
+      let row = {};
+      for (let key in transformedData) {
+        row[key] = transformedData[key][i];
+      }
+      jsonData.push(row);
+    }
+
+    console.log("jsondata")
+    console.log(jsonData)
+
+    updateInstancedMesh();
+
+  }).catch(error => {
+    console.error('Error combining data:', error);
+  });
+
+  fetch(`https://fisheyes.techkyra.com/getdata?col=${prefix}-genes`)
+    .then(data => data.json())
+    .then(results => {
+      let myString = results["data"];
+      myString = myString.replace(/'/g, '"'); // Replace single quotes with double quotes
+      geneData = JSON.parse(myString);
+      console.log("gene", geneData);
+
+      createGeneRadio(geneData);
+    });
+}
+
+await load(prefix);
+
+function onResize() {
+  console.log('You resized the browser window!');
+}
+
+window.addEventListener('resize', onResize);
 
 // let stats = new Stats();
 // document.body.appendChild(stats.dom);
-
-let uniqueCellTypesWithColors = [];
-// get unique cell types and colors
-let cellTypeColorMap = new Map();
-// Fetch all data and combine
-Promise.all(columns.map(fetchDataFromAPI)).then(results => {
-  // Combine data from all columns into one object
-  let transformedData = {};
-
-  console.log(results);
-
-  columns.forEach((col, index) => {
-    let myString = results[index]["data"];
-    myString = myString.replace(/'/g, '"'); // Replace single quotes with double quotes
-    transformedData[col] = JSON.parse(myString);
-  });
-  console.log("trfdata")
-  console.log(transformedData)
-
-  let celltypeList = transformedData["clusters"].filter((value, index, array) => {
-    return array.indexOf(value) === index;
-  })
-
-  console.log(celltypeList);
-
-  for (let i = 0; i < transformedData.clusters.length; i++) {
-    let row = {};
-    for (let key in transformedData) {
-      row[key] = transformedData[key][i];
-    }
-    jsonData.push(row);
-  }
-
-  console.log("jsondata")
-  console.log(jsonData)
-
-  updateInstancedMesh();
-
-  // get unique cell types and colors
-  cellTypeColorMap = new Map();
-
-  jsonData.forEach(item => {
-    // Check if the celltype is already added to the map
-    if (!cellTypeColorMap.has(item.clusters)) {
-      cellTypeColorMap.set(item.clusters, item.clusters_colors);
-    }
-  });
-
-  uniqueCellTypesWithColors = Array.from(cellTypeColorMap, ([celltype, color]) => [celltype, color]);
-
-  console.log(uniqueCellTypesWithColors);
-
-  createCellCheckboxes(uniqueCellTypesWithColors);
-
-}).catch(error => {
-  console.error('Error combining data:', error);
-});
-
-// fetch gene data
-fetch("https://fisheyes.techkyra.com/getdata?col=genes")
-  .then(data => data.json())
-  .then(results => {
-    let myString = results["data"];
-    myString = myString.replace(/'/g, '"'); // Replace single quotes with double quotes
-    geneData = JSON.parse(myString);
-    console.log("gene", geneData);
-
-    createGeneRadio(geneData);
-  });
-
-/* CHECK BOX FUNCTIONALITY */
 
 const cellCheckbox = document.getElementById("cellCheckbox");
 const geneRadioContainer = document.getElementById('geneRadioContainer');
@@ -175,9 +208,6 @@ toggleGeneRadio.addEventListener('click', () => {
   }
 });
 
-// Array to hold the currently checked cell types
-let checkedCellTypes = [];
-
 // Function to update instanced mesh based on checked items
 function updateCheckedItems(celltype, isChecked) {
   if (isChecked) {
@@ -204,6 +234,8 @@ function createCellCheckboxes(cellTypesWithColors) {
     if (a[0].toLowerCase() > b[0].toLowerCase()) return 1;
     return 0;
   });
+
+  console.log(cellTypesWithColors);
 
   cellTypesWithColors.forEach(([celltype, color]) => {
     // Create checkbox
@@ -282,9 +314,11 @@ function createGeneRadio(geneList) {
   });
 }
 
+const cellAlert = document.getElementById('cellNotFound');
+const geneAlert = document.getElementById('geneNotFound');
+
 // filters by search query
 function filterCellSearchQuery(searchQuery) {
-  const alert = document.getElementById('cellNotFound');
 
   // if has query string
   if (searchQuery) {
@@ -300,9 +334,9 @@ function filterCellSearchQuery(searchQuery) {
     // show the alert if no filtered cell type
     if (filteredCellType.length === 0) {
       console.log("here");
-      alert.style.visibility = "visible"
+      cellAlert.style.display = "block"
     } else {
-      alert.style.visibility = "hidden"
+      cellAlert.style.display = "none"
     }
   } else {
     createCellCheckboxes(uniqueCellTypesWithColors); // reset to show all
@@ -327,7 +361,7 @@ cellClearButton.addEventListener('click', () => {
 })
 
 function filterGeneSearchQuery(searchQuery) {
-  const alert = document.getElementById('geneNotFound');
+
 
   // if has query string
   if (searchQuery) {
@@ -343,9 +377,9 @@ function filterGeneSearchQuery(searchQuery) {
     // show the alert if no filtered cell type
     if (filteredGene.length === 0) {
       console.log("here");
-      alert.style.visibility = "visible"
+      geneAlert.style.display = "block"
     } else {
-      alert.style.visibility = "hidden"
+      geneAlert.style.display = "none"
     }
   } else {
     createGeneRadio(geneData); // reset to show all
@@ -515,14 +549,14 @@ async function updateInstancedMesh(filterType = []) {
 
   let color;
 
-  // when plotting gene (diff is just color and size)
-  let cts; // stands for counts
+  // when plotting gene
+  let cts;
   let ctsClipped;
   let nmax;
   if (typeof filterType === 'string') {
     // cts = jsonData.map(item => item[filterType]);
     try {
-      let data = await fetchDataFromAPI(filterType);
+      let data = await fetchDataFromAPI(filterType, prefix);
       cts = JSON.parse(data["data"])
       // You can use cts here
       nmax = calculate99thPercentile(cts);
@@ -540,10 +574,7 @@ async function updateInstancedMesh(filterType = []) {
   let mod = 100;
   let umapmod = 0.5;
 
-  // plotting function
   for (let i = 0; i < count; i++) {
-
-    // plotting gene
     if (typeof filterType === 'string') {
       let colorrgb = coolwarm(ctsClipped[i]);
       console.log(colorrgb);
@@ -555,9 +586,9 @@ async function updateInstancedMesh(filterType = []) {
       umap.scale.set(scale * umapmod, scale * umapmod, scale * umapmod);
 
     } else {
-      // plotting cell type
       if (filterType.includes(jsonData[i]["clusters"]) || filterType.length == 0) {
-        color = new THREE.Color(jsonData[i]["clusters_colors"]);
+        // color = new THREE.Color(jsonData[i]["clusters_colors"]);
+        color = new THREE.Color(pallete[jsonData[i]["clusters"]]);
         proj.scale.set(5, 5, 5);
         umap.scale.set(5 * umapmod, 5 * umapmod, 5 * umapmod);
       } else {
@@ -575,13 +606,17 @@ async function updateInstancedMesh(filterType = []) {
     instancedMesh.setColorAt(i, color);
 
     //plot umap
-    umap.position.set(jsonData[i]["X_umap0_norm"] * 5 + offset, jsonData[i]["X_umap1_norm"] * 5, 10);
+
+    if (prefix == "75pe") {
+      umap.position.set(jsonData[i]["X_umap0_norm"] * 80 + offset, jsonData[i]["X_umap1_norm"] * 80, 10);
+    } else {
+      umap.position.set(jsonData[i]["X_umap0_norm"] * 65 + offset - 25, jsonData[i]["X_umap1_norm"] * 65, 10);
+    }
     umap.updateMatrix();
     instancedMeshUmap.setMatrixAt(i, umap.matrix);
     instancedMeshUmap.setColorAt(i, color);
   }
-  
-  instancedMesh.scale.set(2, 2, 2);
+
   scene.add(instancedMesh);
   scene.add(instancedMeshUmap);
 }

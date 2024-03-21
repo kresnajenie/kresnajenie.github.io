@@ -25,14 +25,28 @@
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#"><b>FISHEYES</b></a>
+        
+        <div id="title">
+          <a class="navbar-brand" href="/#"><b>FISHEYES</b></a>
+          <p>by <i>Bintu Lab</i>, data by <i>Schier Lab</i></p>
+        </div>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ml-auto">
             <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">CBM2</a>
+              <!-- <a class="nav-link active" aria-current="page" href="#">CBM2</a> -->
+
+              <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">Loading...</button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                  <li><a class="dropdown-item" href="#50pe" id="50pe">50pe</a></li>
+                  <li><a class="dropdown-item" href="#75pe" id="75pe">75pe</a></li>
+                </ul>
+              </div>
+
             </li>
             <li class="nav-item">
               <a class="nav-link active" aria-current="page" href="#">Upload</a>
@@ -53,10 +67,7 @@
 
 
     <div class="filter">
-      <div class="button-container">
-        <button type="button" class="toggles btn" id="toggleCellCheckbox">Celltype</button>
-        <button type="button" class="toggles btn" id="toggleGeneRadio">Gene</button>
-      </div>
+      <button type="button" class="toggles btn" id="toggleCellCheckbox">Celltype</button>
 
       <div
         class="checkbox-container"
@@ -65,7 +76,7 @@
       >
         <!-- Textbox input -->
         <div class="input-elements">
-          <input type="text" class="textInput" id="cellTextbox" placeholder="Enter text here"/>
+          <input type="text" class="textInput" id="cellTextbox" placeholder="Search celltype"/>
           <button type="button" class="clearButton btn btn-danger" id="cellClearButton" >Clear</button>
         </div>
         <div class="checkboxes" id="cellCheckboxes"></div>
@@ -75,6 +86,8 @@
         </div>
       </div>
 
+        <button type="button" class="toggles btn" id="toggleGeneRadio">Gene</button>
+
       <div
         class="checkbox-container"
         id="geneRadioContainer"
@@ -82,7 +95,7 @@
       >
         <!-- Textbox input -->
         <div class="input-elements">
-          <input type="text" class="textInput" id="geneTextbox" placeholder="Enter text here"/>
+          <input type="text" class="textInput" id="geneTextbox" placeholder="Search gene"/>
           <button type="button" class="clearButton btn btn-danger" id="geneClearButton" >Clear</button>
         </div>
         <div class="checkboxes" id="geneRadio"></div>
@@ -135,7 +148,7 @@
               fill="currentColor"
             />
           </svg>
-        </button> 
+        </button>
       </div>
     </div>
     <!-- Rest of your buttons and container -->

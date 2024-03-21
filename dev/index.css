@@ -6,13 +6,27 @@
 body {
   font: 16px Arial;
   margin: 0;
+
+  overflow: hidden;
 }
 
 /* Contains all checkbox functionality */
 
 .navbar-nav { 
   margin-left: auto; 
-} 
+}
+
+#title {
+  display: flex;
+  flex-direction: column;
+
+  color: white;
+}
+
+#title p {
+  margin: 0;
+  color: rgb(189, 189, 189);
+}
 
 
 .filter {
@@ -27,6 +41,12 @@ body {
   height: auto;
   margin: 10px;
   width: 20%;
+}
+
+#cellGroup {
+
+  display: flex;
+  flex-direction: row;
 }
 
 /* Button styling */
@@ -60,11 +80,12 @@ body {
   height: 50px;
   border-radius: 50%;
   font-size: 11px;
+  font-weight: bold;
 }
 
 .toggles:hover {
-  background-color: rgb(255, 255, 255);
-  color: black;
+  background-color: rgb(255, 255, 255) !important;
+  color: black !important;
 }
 
 .checkbox-container {
@@ -76,7 +97,7 @@ body {
   border: rgba(58, 58, 58, 0.5) solid;
   padding: 0px 10px 10px 10px;
   border-radius: 5px;
-  max-height: 70vh; /* Set maximum height relative to viewport */
+  max-height: 40vh; /* Set maximum height relative to viewport */
   scrollbar-color: dark;
 
   overflow: auto;
@@ -121,7 +142,7 @@ body {
 }
 
 .notfound {
-  visibility: hidden;
+  display: none;
 }
 
 .plus-jakarta-sans-regular {

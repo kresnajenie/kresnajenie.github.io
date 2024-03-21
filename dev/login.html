@@ -25,14 +25,14 @@
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-          <a class="navbar-brand" href="#"><b>FISHEYES</b></a>
+          <a class="navbar-brand" href="/"><b>FISHEYES</b></a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="#">CBM2</a>
+                <a class="nav-link active" aria-current="page" href="/">CBM2</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link active" aria-current="page" href="#">Upload</a>
@@ -53,16 +53,20 @@
 
     <div class="container">
         <h2>Login</h2>
-        <form action="process-login.php" method="post">
-            <label for="username">Username:</label>
+        <!-- <form action="process-login.php" method="post"> -->
+            <!-- <label for="username">Username:</label>
             <input type="text" id="username" name="username" required>
 
             <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-
-            <input type="submit" value="Login">
-        </form>
+            <input type="password" id="password" name="password" required> -->
+            <input type="submit" value="Login / Signup" id="loginButton">
+            <input type="submit" value="Sign Out" id="signOutButton">
+            <p id="message">Signed in as <span id="userName"></span> with <span id="userEmail"></span></p>
+        <!-- </form> -->
     </div>
-
+    
   </body>
+
+  <!-- LOGIN INIT 🍵 -->
+  <script type="module" src="loginScript.js"></script>
 </html>
