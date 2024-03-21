@@ -610,7 +610,7 @@ async function updateInstancedMesh(filterType = []) {
     if (prefix == "75pe") {
       umap.position.set(jsonData[i]["X_umap0_norm"] * 80 + offset, jsonData[i]["X_umap1_norm"] * 80, 10);
     } else {
-      umap.position.set(jsonData[i]["X_umap0_norm"] * 65 + offset - 25, jsonData[i]["X_umap1_norm"] * 65, 10);
+      umap.position.set(jsonData[i]["X_umap0_norm"] * 60 + offset - 25, jsonData[i]["X_umap1_norm"] * 60, 10);
     }
     umap.updateMatrix();
     instancedMeshUmap.setMatrixAt(i, umap.matrix);
